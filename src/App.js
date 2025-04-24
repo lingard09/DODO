@@ -1,10 +1,21 @@
+import React from "react";
+import { Route, Routes } from "react-router-dom";
+
+import Header from "./Components/Header";
+import Footer from "./Components/Footer";
+import Main from "./Pages/Main";
+
 import './App.css';
 
 function App() {
   return (
-    <>
-      hello world
-    </>
+    <div className="App">
+      <Header />
+      <Routes>
+        <Route path="/" element={<Main />} />
+      </Routes>
+      <Footer />
+    </div>
   );
 }
 
