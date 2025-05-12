@@ -1,8 +1,9 @@
-// src/components/CoupleConnect.jsx
+// src/Components/CoupleConnect.jsx 수정
 import React, { useState, useEffect } from 'react';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from './AuthProvider';
+import '../Components/styles/Auth.css'
 
 const CoupleConnect = ({ onComplete }) => {
   const { currentUser } = useAuth();
@@ -44,6 +45,15 @@ const CoupleConnect = ({ onComplete }) => {
 
     try {
       setError('');
+      
+      // 닉네임 확인
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      let nickname = '익명';
+      
+      if (userDoc.exists() && userDoc.data().nickname) {
+        nickname = userDoc.data().nickname;
+      }
+      
       // 6자리 랜덤 코드 생성
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
       
@@ -51,23 +61,26 @@ const CoupleConnect = ({ onComplete }) => {
       await setDoc(doc(db, 'couples', code), {
         creator: currentUser.uid,
         creatorEmail: currentUser.email,
+        creatorNickname: nickname,
         partner: null,
         partnerEmail: null,
+        partnerNickname: null,
         createdAt: new Date()
       });
       
       // users 컬렉션에 사용자 정보 업데이트
       await setDoc(doc(db, 'users', currentUser.uid), {
         email: currentUser.email,
+        nickname: nickname,
         coupleCode: code,
         role: 'creator'
-      });
+      }, { merge: true });
       
       setCoupleCode(code);
-      setUserInfo({ coupleCode: code, role: 'creator' });
+      setUserInfo({ coupleCode: code, role: 'creator', nickname });
     } catch (error) {
-      setError('코드 생성 중 오류가 발생했습니다');
       console.error('코드 생성 오류:', error);
+      setError('코드 생성 중 오류가 발생했습니다');
     }
   };
 
@@ -77,6 +90,15 @@ const CoupleConnect = ({ onComplete }) => {
 
     try {
       setError('');
+      
+      // 닉네임 확인
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      let nickname = '익명';
+      
+      if (userDoc.exists() && userDoc.data().nickname) {
+        nickname = userDoc.data().nickname;
+      }
+      
       const coupleDoc = await getDoc(doc(db, 'couples', coupleCode.trim().toUpperCase()));
       
       if (!coupleDoc.exists()) {
@@ -101,30 +123,33 @@ const CoupleConnect = ({ onComplete }) => {
       // couples 컬렉션 업데이트
       await updateDoc(doc(db, 'couples', coupleCode.trim().toUpperCase()), {
         partner: currentUser.uid,
-        partnerEmail: currentUser.email
+        partnerEmail: currentUser.email,
+        partnerNickname: nickname
       });
       
       // users 컬렉션에 사용자 정보 추가
       await setDoc(doc(db, 'users', currentUser.uid), {
         email: currentUser.email,
+        nickname: nickname,
         coupleCode: coupleCode.trim().toUpperCase(),
         role: 'partner'
-      });
+      }, { merge: true });
       
       setUserInfo({ 
         coupleCode: coupleCode.trim().toUpperCase(), 
-        role: 'partner' 
+        role: 'partner',
+        nickname
       });
       
       onComplete();
     } catch (error) {
-      setError('연결 중 오류가 발생했습니다');
       console.error('커플 연결 오류:', error);
+      setError('연결 중 오류가 발생했습니다');
     }
   };
 
   if (loading) {
-    return <div>로딩 중...</div>;
+    return <div className="loading-container">로딩 중...</div>;
   }
 
   // 이미 커플 코드가 있는 경우
@@ -139,40 +164,53 @@ const CoupleConnect = ({ onComplete }) => {
   }
 
   return (
-    <div className="couple-connect">
-      <h2>커플 연결하기</h2>
-      
-      <div className="connect-options">
-        <div className="connect-option">
-          <h3>새로운 연결 시작하기</h3>
-          <p>새 커플 코드를 생성하고 파트너와 공유하세요.</p>
-          <button onClick={generateCode}>코드 생성하기</button>
-          
-          {coupleCode && (
-            <div className="code-display">
-              <p>당신의 커플 코드:</p>
-              <h4>{coupleCode}</h4>
-              <p>이 코드를 파트너에게 공유하세요!</p>
-            </div>
-          )}
-        </div>
+    <div className="auth-container">
+      <div className="auth-card">
+        <h2 className="auth-title">커플 연결하기</h2>
         
-        <div className="connect-option">
-          <h3>기존 연결에 참여하기</h3>
-          <p>파트너에게 받은 커플 코드를 입력하세요.</p>
-          <div className="code-input">
-            <input 
-              type="text" 
-              value={coupleCode}
-              onChange={(e) => setCoupleCode(e.target.value)}
-              placeholder="커플 코드 입력"
-            />
-            <button onClick={connectWithCode}>연결하기</button>
+        <div className="connect-options">
+          <div className="connect-option">
+            <h3>새로운 연결 시작하기</h3>
+            <p>새 커플 코드를 생성하고 파트너와 공유하세요.</p>
+            <button 
+              className="auth-button"
+              onClick={generateCode}
+            >
+              코드 생성하기
+            </button>
+            
+            {coupleCode && (
+              <div className="code-display">
+                <p>당신의 커플 코드:</p>
+                <h4>{coupleCode}</h4>
+                <p>이 코드를 파트너에게 공유하세요!</p>
+              </div>
+            )}
+          </div>
+          
+          <div className="connect-option">
+            <h3>기존 연결에 참여하기</h3>
+            <p>파트너에게 받은 커플 코드를 입력하세요.</p>
+            <div className="code-input">
+              <input 
+                type="text" 
+                value={coupleCode}
+                onChange={(e) => setCoupleCode(e.target.value)}
+                placeholder="커플 코드 입력"
+                className="auth-input"
+              />
+              <button 
+                className="auth-button"
+                onClick={connectWithCode}
+              >
+                연결하기
+              </button>
+            </div>
           </div>
         </div>
+        
+        {error && <p className="error-message">{error}</p>}
       </div>
-      
-      {error && <p className="error-message">{error}</p>}
     </div>
   );
 };

@@ -20,6 +20,7 @@ import {
 import { signOut } from "firebase/auth";
 import { db, storage, auth } from "../firebase/config";
 import { useAuth } from "../Components/AuthProvider";
+import Profile from "../Components/Profile";
 import "./styles/Main.css";
 
 const Main = () => {
@@ -38,8 +39,12 @@ const Main = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [newComment, setNewComment] = useState("");
   const [newImage, setNewImage] = useState(null);
-  const [commentAuthor, setCommentAuthor] = useState("");
 
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // 불필요한 getImageUrl 함수 제거
+
+  // 할일 목록 실시간 동기화
   useEffect(() => {
     if (!userInfo?.coupleCode) return;
 
@@ -93,7 +98,6 @@ const Main = () => {
         if (userDoc.exists()) {
           const userData = userDoc.data();
           setUserInfo(userData);
-          setCommentAuthor(userData.role === "creator" ? "내가" : "상대방");
 
           // 커플 정보 불러오기
           if (userData.coupleCode) {
@@ -117,58 +121,22 @@ const Main = () => {
     fetchUserInfo();
   }, [currentUser]);
 
-  // 할일 목록 실시간 동기화
-  useEffect(() => {
-    if (!userInfo?.coupleCode) return;
-
-    // Firestore 쿼리 설정
-    const q = query(
-      collection(db, "tasks"),
-      where("coupleCode", "==", userInfo.coupleCode),
-      orderBy("createdAt", "desc")
-    );
-
-    // 실시간 리스너 설정
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const taskList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      setTasks(taskList);
-    });
-
-    // 컴포넌트 언마운트 시 리스너 해제
-    return () => unsubscribe();
-  }, [userInfo]);
-
-  // 새 할일 추가
   // 새 할일 추가
   const addTask = async (e) => {
     e.preventDefault();
-    console.log("할 일 추가 시도:", {
-      newTask,
-      newAssignee,
-      newDueDate,
-      userInfo,
-    });
-
-    if (!newTask.trim()) {
-      console.log("할 일 내용이 비어 있습니다.");
-      return;
-    }
-
-    if (!userInfo?.coupleCode) {
-      console.log("커플 코드가 없습니다.");
-      return;
-    }
+    if (!newTask.trim() || !userInfo?.coupleCode) return;
 
     try {
-      console.log("Firestore에 할 일 추가 시도...");
+      console.log("할 일 추가 시도:", {
+        text: newTask,
+        assignee: newAssignee,
+        dueDate: newDueDate,
+      });
+
       const taskData = {
         text: newTask,
         completed: false,
-        assignee: newAssignee,
+        assignee: newAssignee, // 상태 값 사용
         dueDate: newDueDate || "",
         comments: [],
         images: [],
@@ -176,20 +144,18 @@ const Main = () => {
         createdAt: new Date(),
         createdBy: currentUser.uid,
       };
-      console.log("추가할 데이터:", taskData);
 
-      const docRef = await addDoc(collection(db, "tasks"), taskData);
-      console.log("할 일 추가 성공!", docRef.id);
+      await addDoc(collection(db, "tasks"), taskData);
 
       setNewTask("");
       setNewDueDate("");
+      // 필요에 따라 담당자 초기화
+      // setNewAssignee('둘 다');
     } catch (error) {
-      console.error("할 일 추가 오류 세부 정보:", error);
-      console.error("오류 코드:", error.code);
-      console.error("오류 메시지:", error.message);
-      alert(`할 일 추가 중 오류가 발생했습니다: ${error.message}`);
+      console.error("할 일 추가 오류:", error);
     }
   };
+
   // 할일 완료 상태 토글
   const toggleComplete = async (e, taskId) => {
     e.stopPropagation();
@@ -224,9 +190,58 @@ const Main = () => {
   };
 
   // 모달 열기
+  // 모달 열기 시 이미지 URL 업데이트 함수 추가
   const openModal = async (task) => {
     setSelectedTask(task);
     setIsModalOpen(true);
+
+    // 이미지 URL 업데이트
+    if (task.images && task.images.length > 0) {
+      try {
+        // 이미지 URL이 alt=media 파라미터를 가지고 있지 않은 경우 새 URL 가져오기
+        const updatedImages = await Promise.all(
+          task.images.map(async (image) => {
+            // URL이 이미 올바른 형식인지 확인
+            if (image.url && image.url.includes("alt=media")) {
+              return image;
+            }
+
+            // path가 있으면 새 다운로드 URL 가져오기
+            if (image.path) {
+              try {
+                const imageRef = ref(storage, image.path);
+                const newUrl = await getDownloadURL(imageRef);
+                console.log(`이미지 ${image.id} URL 업데이트됨:`, newUrl);
+                return { ...image, url: newUrl };
+              } catch (err) {
+                console.error(`이미지 ${image.id} URL 업데이트 실패:`, err);
+                return image;
+              }
+            }
+            return image;
+          })
+        );
+
+        // 업데이트된 이미지가 있으면 상태 업데이트
+        if (JSON.stringify(updatedImages) !== JSON.stringify(task.images)) {
+          console.log("이미지 URL이 업데이트되었습니다");
+          setSelectedTask({
+            ...task,
+            images: updatedImages,
+          });
+
+          // Firestore에도 업데이트 (선택 사항)
+          try {
+            const taskRef = doc(db, "tasks", task.id);
+            await updateDoc(taskRef, { images: updatedImages });
+          } catch (updateErr) {
+            console.error("Firestore 이미지 URL 업데이트 실패:", updateErr);
+          }
+        }
+      } catch (error) {
+        console.error("이미지 URL 업데이트 중 오류 발생:", error);
+      }
+    }
   };
 
   // 모달 닫기
@@ -251,13 +266,13 @@ const Main = () => {
         const newCommentObj = {
           id: Date.now().toString(),
           text: newComment,
-          author: commentAuthor,
-          date: new Date().toISOString().split("T")[0],
+          // 댓글 작성자를 '나' 또는 '상대'로 저장하지 않고 작성자의 uid를 저장
           createdBy: currentUser.uid,
+          date: new Date().toISOString().split("T")[0],
         };
 
         await updateDoc(taskRef, {
-          comments: [...taskData.comments, newCommentObj],
+          comments: [...(taskData.comments || []), newCommentObj],
           updatedAt: new Date(),
         });
 
@@ -266,12 +281,69 @@ const Main = () => {
         // 선택된 task 업데이트
         setSelectedTask({
           ...selectedTask,
-          comments: [...selectedTask.comments, newCommentObj],
+          comments: [...(selectedTask.comments || []), newCommentObj],
         });
       }
     } catch (error) {
       console.error("댓글 추가 오류:", error);
     }
+  };
+
+  const optimizeImage = async (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          // 캔버스에 이미지 그리기 (크기 줄이기)
+          const canvas = document.createElement("canvas");
+
+          // 최대 크기 지정 (e.g., 800x600)
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 600;
+
+          let width = img.width;
+          let height = img.height;
+
+          // 비율 유지하면서 크기 조정
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // WebP 형식으로 변환 (지원되는 브라우저에서)
+          const format = "image/jpeg";
+          const quality = 0.7; // 70% 품질 (파일 크기 감소)
+
+          canvas.toBlob(
+            (blob) => {
+              // 새 파일 이름 생성
+              const optimizedFile = new File([blob], file.name, {
+                type: format,
+              });
+              resolve(optimizedFile);
+            },
+            format,
+            quality
+          );
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   // 이미지 업로드
@@ -286,16 +358,22 @@ const Main = () => {
     if (!newImage || !selectedTask || !userInfo?.coupleCode) return;
 
     try {
-      // 스토리지에 이미지 업로드
-      const imageRef = ref(
-        storage,
-        `images/${userInfo.coupleCode}/${Date.now()}_${newImage.name}`
-      );
+      // 0. 이미지 최적화
+      const optimizedImage = await optimizeImage(newImage);
 
-      await uploadBytes(imageRef, newImage);
-      const imageUrl = await getDownloadURL(imageRef);
+      // 1. 파일 참조 생성
+      const imageName = `${Date.now()}_${optimizedImage.name}`;
+      const imagePath = `images/${userInfo.coupleCode}/${imageName}`;
+      const imageRef = ref(storage, imagePath);
 
-      // Firestore에 이미지 정보 저장
+      // 2. 이미지 업로드
+      await uploadBytes(imageRef, optimizedImage);
+
+      // 3. 다운로드 URL 가져오기 - 여기가 중요!
+      const downloadUrl = await getDownloadURL(imageRef);
+      console.log("생성된 다운로드 URL:", downloadUrl); // 디버깅용
+
+      // 4. Firestore에 이미지 정보 저장 (URL 포함)
       const taskRef = doc(db, "tasks", selectedTask.id);
       const taskDoc = await getDoc(taskRef);
 
@@ -303,22 +381,22 @@ const Main = () => {
         const taskData = taskDoc.data();
         const newImageObj = {
           id: Date.now().toString(),
-          url: imageUrl,
+          url: downloadUrl, // ← 다운로드 URL 저장
           name: newImage.name,
-          path: imageRef.fullPath,
+          path: imagePath,
           uploadedBy: currentUser.uid,
           uploadedAt: new Date().toISOString(),
         };
 
         await updateDoc(taskRef, {
-          images: [...taskData.images, newImageObj],
+          images: [...(taskData.images || []), newImageObj],
           updatedAt: new Date(),
         });
 
-        // 선택된 task 업데이트
+        // 5. UI 업데이트
         setSelectedTask({
           ...selectedTask,
-          images: [...selectedTask.images, newImageObj],
+          images: [...(selectedTask.images || []), newImageObj],
         });
 
         setNewImage(null);
@@ -329,6 +407,7 @@ const Main = () => {
       }
     } catch (error) {
       console.error("이미지 업로드 오류:", error);
+      alert("이미지 업로드에 실패했습니다: " + error.message);
     }
   };
 
@@ -388,13 +467,11 @@ const Main = () => {
     } else if (filter === "active") {
       filteredTasks = filteredTasks.filter((task) => !task.completed);
     } else if (filter === "mine") {
-      filteredTasks = filteredTasks.filter((task) => task.assignee === "내가");
+      filteredTasks = filteredTasks.filter((task) => task.assignee === "나");
     } else if (filter === "partner") {
-      filteredTasks = filteredTasks.filter(
-        (task) => task.assignee === "상대방"
-      );
+      filteredTasks = filteredTasks.filter((task) => task.assignee === "상대");
     } else if (filter === "both") {
-      filteredTasks = filteredTasks.filter((task) => task.assignee === "둘 다");
+      filteredTasks = filteredTasks.filter((task) => task.assignee === "우리");
     }
 
     // 날짜별 정렬
@@ -411,25 +488,37 @@ const Main = () => {
     return <div className="loading">로딩 중...</div>;
   }
 
+  // coupleInfo가 없을 때 예외 처리
+  if (!coupleInfo) {
+    return <div className="loading">커플 정보를 불러오는 중...</div>;
+  }
+
   return (
     <div className="todo-container">
       <div className="todo-header">
-        <h1>우리의 투두리스트</h1>
+        <h1>우리의 두두 아카이브</h1>
         {coupleInfo && (
           <div className="couple-info">
             <span>
               {userInfo.role === "creator"
-                ? coupleInfo.partnerEmail || "대기 중..."
-                : coupleInfo.creatorEmail}{" "}
+                ? coupleInfo.partnerNickname || "대기 중..."
+                : coupleInfo.creatorNickname}{" "}
               님과 연결됨
             </span>
+            <button
+              className="profile-button"
+              onClick={() => setIsProfileOpen(true)}
+            >
+              프로필
+            </button>
             <button className="logout-button" onClick={handleLogout}>
               로그아웃
             </button>
           </div>
         )}
       </div>
-
+      {/* 프로필 모달 */}
+      {isProfileOpen && <Profile onClose={() => setIsProfileOpen(false)} />}
       {/* 입력 폼 */}
       <form className="todo-form" onSubmit={addTask}>
         <div className="todo-input-group">
@@ -453,9 +542,19 @@ const Main = () => {
               value={newAssignee}
               onChange={(e) => setNewAssignee(e.target.value)}
             >
-              <option value="내가">내가</option>
-              <option value="상대방">상대방</option>
-              <option value="둘 다">둘 다</option>
+              <option value="나">
+                {userInfo.role === "creator"
+                  ? coupleInfo.creatorNickname
+                  : coupleInfo.partnerNickname || "나"}
+                (나)
+              </option>
+              <option value="상대">
+                {userInfo.role === "creator"
+                  ? coupleInfo.partnerNickname || "상대방"
+                  : coupleInfo.creatorNickname}
+                (상대)
+              </option>
+              <option value="우리">우리</option>
             </select>
           </div>
 
@@ -470,7 +569,6 @@ const Main = () => {
           </div>
         </div>
       </form>
-
       {/* 필터 버튼 */}
       <div className="filter-container">
         <button
@@ -510,7 +608,6 @@ const Main = () => {
           둘 다
         </button>
       </div>
-
       {/* 할일 목록 */}
       <div className="todo-list">
         {filteredTasks.length === 0 ? (
@@ -534,9 +631,9 @@ const Main = () => {
                   <div className="todo-meta">
                     <span
                       className={`todo-tag ${
-                        task.assignee === "내가"
+                        task.assignee === "나"
                           ? "tag-me"
-                          : task.assignee === "상대방"
+                          : task.assignee === "상대"
                           ? "tag-partner"
                           : "tag-both"
                       }`}
@@ -569,12 +666,10 @@ const Main = () => {
           ))
         )}
       </div>
-
       {/* 통계 정보 */}
       <div className="todo-stats">
         총 {tasks.length}개 중 {tasks.filter((t) => t.completed).length}개 완료
       </div>
-
       {/* 상세 모달 */}
       {isModalOpen && selectedTask && (
         <div className="modal-backdrop" onClick={closeModal}>
@@ -622,7 +717,51 @@ const Main = () => {
                     <div className="image-preview">
                       {selectedTask.images.map((image) => (
                         <div key={image.id} className="image-item">
-                          <img src={image.url} alt={image.name} />
+                          <img
+                            src={image.url}
+                            alt={image.name}
+                            onError={(e) => {
+                              console.error("이미지 로딩 실패:", image.url);
+                              e.target.src =
+                                "https://via.placeholder.com/150?text=이미지+로딩+실패";
+
+                              // 이미지 로딩 실패 시 URL 업데이트 시도 (선택 사항)
+                              if (image.path) {
+                                (async () => {
+                                  try {
+                                    const imageRef = ref(storage, image.path);
+                                    const newUrl = await getDownloadURL(
+                                      imageRef
+                                    );
+
+                                    // 새 URL로 이미지 다시 로드 시도
+                                    if (newUrl !== image.url) {
+                                      e.target.src = newUrl;
+
+                                      // 상태 업데이트
+                                      setSelectedTask((prevTask) => {
+                                        const updatedImages =
+                                          prevTask.images.map((img) =>
+                                            img.id === image.id
+                                              ? { ...img, url: newUrl }
+                                              : img
+                                          );
+                                        return {
+                                          ...prevTask,
+                                          images: updatedImages,
+                                        };
+                                      });
+                                    }
+                                  } catch (err) {
+                                    console.error(
+                                      "이미지 URL 재시도 실패:",
+                                      err
+                                    );
+                                  }
+                                })();
+                              }
+                            }}
+                          />
                           <button
                             className="image-delete"
                             onClick={() => deleteImage(image.id)}
@@ -668,7 +807,10 @@ const Main = () => {
                       <div key={comment.id} className="comment-item">
                         <div className="comment-header">
                           <span className="comment-author">
-                            {comment.author}
+                            {/* 작성자 uid와 현재 사용자 uid 비교하여 '나' 또는 '상대'로 표시 */}
+                            {comment.createdBy === currentUser.uid
+                              ? "나"
+                              : "상대"}
                           </span>
                           <span className="comment-date">{comment.date}</span>
                         </div>
@@ -681,18 +823,6 @@ const Main = () => {
                 </div>
 
                 <div className="comment-form">
-                  <div className="form-group">
-                    <label className="form-label">작성자</label>
-                    <select
-                      className="form-select"
-                      value={commentAuthor}
-                      onChange={(e) => setCommentAuthor(e.target.value)}
-                    >
-                      <option value="내가">내가</option>
-                      <option value="상대방">상대방</option>
-                    </select>
-                  </div>
-
                   <textarea
                     className="comment-input"
                     value={newComment}
