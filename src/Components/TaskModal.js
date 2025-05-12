@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useTaskActions } from "../hooks/UseTaskActions";
+import { useTaskActions } from "../hooks/useTaskActions";
 import CommentSection from "./CommentSection";
 import ImageSection from "./ImageSection";
 
