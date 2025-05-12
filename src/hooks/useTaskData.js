@@ -8,6 +8,8 @@ import {
   addDoc,
   doc,
   getDoc,
+  updateDoc,
+  deleteDoc
 } from "firebase/firestore";
 import { db } from "../firebase/config";
 
@@ -123,7 +125,34 @@ export const useTaskData = (currentUser) => {
     }
   };
 
-  // 다른 필요한 기능들은 useTaskActions 훅으로 분리
+  // 할일 완료 상태 토글
+  const toggleComplete = async (taskId) => {
+    try {
+      const taskRef = doc(db, "tasks", taskId);
+      const taskDoc = await getDoc(taskRef);
+
+      if (taskDoc.exists()) {
+        await updateDoc(taskRef, {
+          completed: !taskDoc.data().completed,
+          updatedAt: new Date(),
+          updatedBy: currentUser.uid,
+        });
+      }
+    } catch (error) {
+      console.error("완료 상태 변경 오류:", error);
+    }
+  };
+
+  // 할일 삭제
+  const deleteTask = async (taskId) => {
+    if (!window.confirm("정말로 이 할일을 삭제하시겠습니까?")) return;
+
+    try {
+      await deleteDoc(doc(db, "tasks", taskId));
+    } catch (error) {
+      console.error("할일 삭제 오류:", error);
+    }
+  };
 
   return {
     tasks,
@@ -131,16 +160,7 @@ export const useTaskData = (currentUser) => {
     coupleInfo,
     loading,
     addTask,
-    toggleComplete: (taskId) => useTaskActions().toggleComplete(taskId), 
-    deleteTask: (taskId) => useTaskActions().deleteTask(taskId)
-  };
-};
-
-// 이 함수는 useTaskData에서 임시로 사용하기 위한 함수입니다.
-// 실제 구현은 useTaskActions 훅에 있습니다.
-const useTaskActions = () => {
-  return {
-    toggleComplete: () => {},
-    deleteTask: () => {}
+    toggleComplete,
+    deleteTask
   };
 };
