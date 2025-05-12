@@ -77,7 +77,7 @@
 }
 
 .auth-input {
-  width: 100%;
+  width: 92%;
   padding: 12px 15px;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -308,7 +308,8 @@
 }
 
 .code-input {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   margin-top: 15px;
 }
 

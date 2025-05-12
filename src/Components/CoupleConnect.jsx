@@ -1,9 +1,8 @@
-// src/Components/CoupleConnect.jsx 수정
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from './AuthProvider';
-import '../Components/styles/Auth.css'
+import '../Components/styles/Auth.css';
 
 const CoupleConnect = ({ onComplete }) => {
   const { currentUser } = useAuth();
@@ -73,7 +72,8 @@ const CoupleConnect = ({ onComplete }) => {
         email: currentUser.email,
         nickname: nickname,
         coupleCode: code,
-        role: 'creator'
+        role: 'creator',
+        updatedAt: new Date()
       }, { merge: true });
       
       setCoupleCode(code);
@@ -86,7 +86,10 @@ const CoupleConnect = ({ onComplete }) => {
 
   // 기존 커플 코드로 연결
   const connectWithCode = async () => {
-    if (!currentUser || !coupleCode.trim()) return;
+    if (!currentUser || !coupleCode.trim()) {
+      setError('커플 코드를 입력해주세요');
+      return;
+    }
 
     try {
       setError('');
@@ -99,7 +102,8 @@ const CoupleConnect = ({ onComplete }) => {
         nickname = userDoc.data().nickname;
       }
       
-      const coupleDoc = await getDoc(doc(db, 'couples', coupleCode.trim().toUpperCase()));
+      const formatCode = coupleCode.trim().toUpperCase();
+      const coupleDoc = await getDoc(doc(db, 'couples', formatCode));
       
       if (!coupleDoc.exists()) {
         setError('존재하지 않는 커플 코드입니다');
@@ -121,22 +125,24 @@ const CoupleConnect = ({ onComplete }) => {
       }
       
       // couples 컬렉션 업데이트
-      await updateDoc(doc(db, 'couples', coupleCode.trim().toUpperCase()), {
+      await updateDoc(doc(db, 'couples', formatCode), {
         partner: currentUser.uid,
         partnerEmail: currentUser.email,
-        partnerNickname: nickname
+        partnerNickname: nickname,
+        updatedAt: new Date()
       });
       
       // users 컬렉션에 사용자 정보 추가
       await setDoc(doc(db, 'users', currentUser.uid), {
         email: currentUser.email,
         nickname: nickname,
-        coupleCode: coupleCode.trim().toUpperCase(),
-        role: 'partner'
+        coupleCode: formatCode,
+        role: 'partner',
+        updatedAt: new Date()
       }, { merge: true });
       
       setUserInfo({ 
-        coupleCode: coupleCode.trim().toUpperCase(), 
+        coupleCode: formatCode, 
         role: 'partner',
         nickname
       });
@@ -149,16 +155,23 @@ const CoupleConnect = ({ onComplete }) => {
   };
 
   if (loading) {
-    return <div className="loading-container">로딩 중...</div>;
+    return <div className="auth-container"><div className="auth-card">로딩 중...</div></div>;
   }
 
   // 이미 커플 코드가 있는 경우
   if (userInfo?.coupleCode) {
     return (
-      <div className="couple-connected">
-        <h2>연결 완료!</h2>
-        <p>커플 코드: <strong>{userInfo.coupleCode}</strong></p>
-        <button onClick={onComplete}>투두리스트로 이동</button>
+      <div className="auth-container">
+        <div className="auth-card couple-connected">
+          <h2>코드 생성 완료!</h2>
+          <p>커플 코드: <strong>{userInfo.coupleCode}</strong></p>
+          <button 
+            onClick={onComplete}
+            className="auth-button"
+          >
+            투두리스트로 이동
+          </button>
+        </div>
       </div>
     );
   }
@@ -166,7 +179,9 @@ const CoupleConnect = ({ onComplete }) => {
   return (
     <div className="auth-container">
       <div className="auth-card">
+        <h1 className="auth-main-title">커플 투두리스트</h1>
         <h2 className="auth-title">커플 연결하기</h2>
+        <p className="auth-subtitle">두 분의 소중한 할 일을 함께 관리해보세요</p>
         
         <div className="connect-options">
           <div className="connect-option">
@@ -179,13 +194,13 @@ const CoupleConnect = ({ onComplete }) => {
               코드 생성하기
             </button>
             
-            {coupleCode && (
+            {/* {coupleCode && (
               <div className="code-display">
                 <p>당신의 커플 코드:</p>
                 <h4>{coupleCode}</h4>
                 <p>이 코드를 파트너에게 공유하세요!</p>
               </div>
-            )}
+            )} */}
           </div>
           
           <div className="connect-option">
@@ -198,6 +213,7 @@ const CoupleConnect = ({ onComplete }) => {
                 onChange={(e) => setCoupleCode(e.target.value)}
                 placeholder="커플 코드 입력"
                 className="auth-input"
+                maxLength={6}
               />
               <button 
                 className="auth-button"

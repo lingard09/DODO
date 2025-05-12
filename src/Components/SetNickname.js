@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "./AuthProvider";
 import "../Components/styles/Auth.css"; // 기존 스타일 재사용
@@ -17,7 +17,9 @@ const SetNickname = ({ onComplete }) => {
       if (!currentUser) return;
 
       try {
-        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        const userRef = doc(db, "users", currentUser.uid);
+        const userDoc = await getDoc(userRef);
+        
         if (userDoc.exists()) {
           const userData = userDoc.data();
           setUserInfo(userData);
@@ -25,6 +27,8 @@ const SetNickname = ({ onComplete }) => {
           if (userData.nickname) {
             setNickname(userData.nickname);
           }
+        } else {
+          console.log("사용자 문서가 존재하지 않음, 초기 문서 생성 필요");
         }
       } catch (error) {
         console.error("사용자 정보 가져오기 오류:", error);
@@ -38,6 +42,11 @@ const SetNickname = ({ onComplete }) => {
   const saveNickname = async (e) => {
     e.preventDefault();
 
+    if (!currentUser) {
+      setError("로그인이 필요합니다.");
+      return;
+    }
+
     if (!nickname.trim()) {
       setError("닉네임을 입력해주세요.");
       return;
@@ -47,36 +56,60 @@ const SetNickname = ({ onComplete }) => {
     setError("");
 
     try {
-      // 사용자 문서 업데이트
-      await updateDoc(doc(db, "users", currentUser.uid), {
-        nickname: nickname.trim(),
-      });
+      const userRef = doc(db, "users", currentUser.uid);
+      
+      // 먼저 문서가 존재하는지 확인
+      const userDoc = await getDoc(userRef);
+      
+      if (!userDoc.exists()) {
+        // 사용자 문서가 존재하지 않으면 새로 생성
+        console.log("사용자 문서 생성");
+        await setDoc(userRef, {
+          uid: currentUser.uid,
+          email: currentUser.email,
+          nickname: nickname.trim(),
+          createdAt: new Date(),
+          photoURL: currentUser.photoURL || null,
+          role: "unassigned" // 아직 커플 연결이 안 되었으므로 미지정 상태
+        });
+      } else {
+        // 이미 존재하면 업데이트
+        console.log("사용자 문서 업데이트");
+        await updateDoc(userRef, {
+          nickname: nickname.trim(),
+          updatedAt: new Date()
+        });
 
-      // 만약 이미 커플 연결이 되어 있다면, couples 문서도 업데이트
-      if (userInfo?.coupleCode) {
-        const coupleDoc = await getDoc(doc(db, "couples", userInfo.coupleCode));
+        // 만약 이미 커플 연결이 되어 있다면, couples 문서도 업데이트
+        if (userInfo?.coupleCode) {
+          const coupleRef = doc(db, "couples", userInfo.coupleCode);
+          const coupleDoc = await getDoc(coupleRef);
 
-        if (coupleDoc.exists()) {
-          const coupleData = coupleDoc.data();
+          if (coupleDoc.exists()) {
+            const coupleData = coupleDoc.data();
 
-          // 생성자인지 파트너인지에 따라 다른 필드 업데이트
-          if (coupleData.creator === currentUser.uid) {
-            await updateDoc(doc(db, "couples", userInfo.coupleCode), {
-              creatorNickname: nickname.trim(),
-            });
-          } else if (coupleData.partner === currentUser.uid) {
-            await updateDoc(doc(db, "couples", userInfo.coupleCode), {
-              partnerNickname: nickname.trim(),
-            });
+            // 생성자인지 파트너인지에 따라 다른 필드 업데이트
+            if (coupleData.creator === currentUser.uid) {
+              await updateDoc(coupleRef, {
+                creatorNickname: nickname.trim(),
+                updatedAt: new Date()
+              });
+            } else if (coupleData.partner === currentUser.uid) {
+              await updateDoc(coupleRef, {
+                partnerNickname: nickname.trim(),
+                updatedAt: new Date()
+              });
+            }
           }
         }
       }
 
+      console.log("닉네임 저장 완료");
       // 완료 콜백 호출
       onComplete();
     } catch (error) {
       console.error("닉네임 저장 오류:", error);
-      setError("닉네임을 저장하는 중 오류가 발생했습니다.");
+      setError(`닉네임을 저장하는 중 오류가 발생했습니다: ${error.message}`);
     } finally {
       setLoading(false);
     }

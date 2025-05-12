@@ -1,11 +1,11 @@
 // src/App.jsx
-import React, { useState, useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from './firebase/config';
-import { AuthProvider, useAuth } from './Components/AuthProvider';
-import Auth from './Components/Auth';
-import CoupleConnect from './Components/CoupleConnect';
-import SetNickname from './Components/SetNickname';
+import React, { useState, useEffect } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "./firebase/config";
+import { AuthProvider, useAuth } from "./Components/AuthProvider";
+import Auth from "./Components/Auth";
+import CoupleConnect from "./Components/CoupleConnect";
+import SetNickname from "./Components/SetNickname";
 
 const AppContent = () => {
   const { currentUser } = useAuth();
@@ -24,26 +24,26 @@ const AppContent = () => {
       }
 
       try {
-        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-        
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+
         if (userDoc.exists()) {
           const userData = userDoc.data();
           setUserInfo(userData); // userInfo 설정은 여전히 필요함
-          
+
           // 닉네임이 있는지 확인
           if (userData.nickname) {
             setHasNickname(true);
           }
-          
+
           // 커플 코드가 있는지 확인
           if (userData.coupleCode) {
             setIsConnected(true);
           }
         }
-        
+
         setLoading(false);
       } catch (error) {
-        console.error('사용자 정보 확인 오류:', error);
+        console.error("사용자 정보 확인 오류:", error);
         setLoading(false);
       }
     };
@@ -68,10 +68,12 @@ const AppContent = () => {
   }
 
   // CoupleToDoList 컴포넌트 임포트
-  const CoupleToDoList = React.lazy(() => import('./Pages/Main'));
-  
+  const CoupleToDoList = React.lazy(() => import("./Components/Main"));
+
   return (
-    <React.Suspense fallback={<div className="loading-container">로딩 중...</div>}>
+    <React.Suspense
+      fallback={<div className="loading-container">로딩 중...</div>}
+    >
       <CoupleToDoList />
     </React.Suspense>
   );

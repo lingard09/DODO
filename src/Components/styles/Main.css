@@ -5,7 +5,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
 }
 
 body {
@@ -95,7 +95,8 @@ body {
   margin-bottom: 5px;
 }
 
-.form-select, .form-date {
+.form-select,
+.form-date {
   width: 100%;
   padding: 8px 10px;
   border: 1px solid #ddd;
@@ -103,7 +104,8 @@ body {
   font-size: 14px;
 }
 
-.form-select:focus, .form-date:focus {
+.form-select:focus,
+.form-date:focus {
   outline: none;
   border-color: #a64dff;
   box-shadow: 0 0 0 2px rgba(166, 77, 255, 0.2);
@@ -496,23 +498,89 @@ body {
   z-index: 2;
 }
 
+/* 프로필 및 로그아웃 버튼 스타일 */
+.couple-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.couple-info span {
+  font-size: 14px;
+  color: #666;
+}
+
+.profile-button {
+  background-color: #f0e6ff;
+  color: #8a2be2;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.profile-button:hover {
+  background-color: #e1d2ff;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 5px rgba(138, 43, 226, 0.2);
+}
+
+.logout-button {
+  background-color: #ffe6eb;
+  color: #ff4d6d;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.logout-button:hover {
+  background-color: #ffd0d9;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 5px rgba(255, 77, 109, 0.2);
+}
+
 /* 반응형 */
 @media (max-width: 500px) {
   .todo-form-options {
     flex-direction: column;
     gap: 10px;
   }
-  
+
   .filter-container {
     justify-content: center;
   }
-  
+
   .modal-container {
     width: 95%;
     padding: 15px;
   }
-  
+
   .modal-info {
     flex-direction: column;
+  }
+
+  .couple-info {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .couple-info span {
+    margin-bottom: 5px;
+  }
+
+  .profile-button,
+  .logout-button {
+    width: 100%;
+    margin-bottom: 5px;
   }
 }

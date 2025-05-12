@@ -1,0 +1,259 @@
+/* Profile.css */
+
+/* 프로필 모달 배경 */
+.profile-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* 프로필 모달 컨테이너 */
+.profile-modal {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 450px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 25px;
+  position: relative;
+}
+
+/* 프로필 헤더 */
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f0e6ff;
+}
+
+.profile-header h2 {
+  font-size: 22px;
+  color: #8a2be2;
+  font-weight: bold;
+  margin: 0;
+}
+
+.profile-close-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.profile-close-btn:hover {
+  color: #555;
+}
+
+/* 프로필 내용 */
+.profile-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 프로필 이미지 섹션 */
+.profile-image-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 25px;
+}
+
+.profile-image-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(138, 43, 226, 0.2);
+  border: 3px solid #f0e6ff;
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-upload-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(138, 43, 226, 0.7);
+  color: white;
+  text-align: center;
+  padding: 8px 0;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: block; /* 반드시 표시되도록 설정 */
+}
+
+.image-upload-label:hover {
+  background-color: rgba(138, 43, 226, 0.9);
+}
+
+/* 프로필 정보 섹션 */
+.profile-info-section {
+  width: 100%;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.profile-info-item {
+  margin-bottom: 15px;
+}
+
+.profile-info-label {
+  display: block;
+  font-size: 12px;
+  color: #777;
+  margin-bottom: 5px;
+}
+
+.profile-info-value {
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
+}
+
+/* 프로필 편집 폼 */
+.profile-edit-form {
+  width: 100%;
+}
+
+.profile-edit-form .form-group {
+  margin-bottom: 15px;
+}
+
+.profile-edit-form label {
+  display: block;
+  font-size: 12px;
+  color: #777;
+  margin-bottom: 5px;
+}
+
+.profile-edit-form input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.profile-edit-form input:focus {
+  outline: none;
+  border-color: #a64dff;
+  box-shadow: 0 0 0 2px rgba(166, 77, 255, 0.2);
+}
+
+/* 프로필 버튼 */
+.profile-edit-btn {
+  background-color: #f0e6ff;
+  color: #8a2be2;
+  border: none;
+  border-radius: 25px;
+  padding: 10px 0;
+  width: 100%;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  margin-top: 10px;
+}
+
+.profile-edit-btn:hover {
+  background-color: #e1d2ff;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 5px rgba(138, 43, 226, 0.2);
+}
+
+/* 편집 버튼 그룹 */
+.profile-edit-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.profile-cancel-btn {
+  flex: 1;
+  background-color: #f0f0f0;
+  color: #555;
+  border: none;
+  border-radius: 25px;
+  padding: 10px 0;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.profile-cancel-btn:hover {
+  background-color: #e0e0e0;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+}
+
+.profile-save-btn {
+  flex: 1;
+  background-color: #f0e6ff;
+  color: #8a2be2;
+  border: none;
+  border-radius: 25px;
+  padding: 10px 0;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.profile-save-btn:hover {
+  background-color: #e1d2ff;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 5px rgba(138, 43, 226, 0.2);
+}
+
+/* 사진 변경 버튼 추가 시각적 효과 */
+.profile-image-container:hover .image-upload-label {
+  background-color: rgba(138, 43, 226, 0.9);
+}
+
+/* 반응형 스타일 */
+@media (max-width: 500px) {
+  .profile-modal {
+    width: 95%;
+    padding: 15px;
+  }
+  
+  .profile-image-container {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .profile-edit-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .profile-cancel-btn, .profile-save-btn {
+    padding: 12px 0;
+  }
+}
