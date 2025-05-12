@@ -1,0 +1,335 @@
+/* Auth.css - 로그인/회원가입 페이지 스타일 */
+
+/* 전체 컨테이너 */
+.auth-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ffcad4 0%, #e6e6ff 100%);
+  padding: 20px;
+  font-family: 'Arial', sans-serif;
+}
+
+/* 로그인/회원가입 카드 */
+.auth-card {
+  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 420px;
+  padding: 35px;
+  transition: all 0.3s ease;
+}
+
+/* 페이지 타이틀 */
+.auth-title {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #8a2be2;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+/* 로고 영역 */
+.auth-logo {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.auth-logo img {
+  width: 100px;
+  height: 100px;
+}
+
+/* 메인 타이틀 */
+.auth-main-title {
+  text-align: center;
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+/* 서브 타이틀 */
+.auth-subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 30px;
+  font-size: 15px;
+}
+
+/* 폼 스타일 */
+.auth-form {
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  color: #555;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: border-color 0.3s;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: #9b59b6;
+  box-shadow: 0 0 0 2px rgba(155, 89, 182, 0.2);
+}
+
+/* 에러 메시지 */
+.error-message {
+  color: #e74c3c;
+  font-size: 13px;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+/* 버튼 스타일 */
+.auth-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #8a2be2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.auth-button:hover {
+  background-color: #7823c9;
+}
+
+.auth-button:disabled {
+  background-color: #ccb3e6;
+  cursor: not-allowed;
+}
+
+/* 소셜 로그인 영역 */
+.social-login {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.social-divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background-color: #e0e0e0;
+}
+
+.divider-text {
+  padding: 0 15px;
+  color: #666;
+  font-size: 14px;
+}
+
+.social-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.social-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 1px solid #e0e0e0;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.social-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+}
+
+.social-button img {
+  width: 24px;
+  height: 24px;
+}
+
+/* 로그인/회원가입 전환 영역 */
+.auth-toggle {
+  text-align: center;
+  margin-top: 25px;
+  color: #555;
+  font-size: 14px;
+}
+
+.toggle-button {
+  background: none;
+  border: none;
+  color: #8a2be2;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+  margin-left: 5px;
+  text-decoration: underline;
+}
+
+.toggle-button:hover {
+  color: #7823c9;
+}
+
+/* 애니메이션 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* 커플 이미지 (선택 사항) */
+.couple-image {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 150px;
+  height: auto;
+  opacity: 0.7;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 25px 20px;
+  }
+  
+  .auth-title {
+    font-size: 24px;
+  }
+  
+  .couple-image {
+    width: 100px;
+    bottom: 10px;
+    right: 10px;
+  }
+}
+
+/* 커플 연결 페이지 추가 스타일 */
+.connect-options {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  margin-top: 15px;
+}
+
+.connect-option {
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+}
+
+.connect-option h3 {
+  color: #8a2be2;
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+.connect-option p {
+  color: #666;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.code-display {
+  margin-top: 15px;
+  text-align: center;
+  background-color: #f0e6ff;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.code-display h4 {
+  font-size: 24px;
+  color: #8a2be2;
+  letter-spacing: 2px;
+  margin: 10px 0;
+}
+
+.code-input {
+  display: flex;
+  margin-top: 15px;
+}
+
+.code-input input {
+  flex: 1;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px 0 0 8px;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.code-input button {
+  padding: 10px 20px;
+  background-color: #8a2be2;
+  color: white;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+}
+
+.couple-connected {
+  text-align: center;
+  padding: 20px;
+}
+
+.couple-connected h2 {
+  color: #8a2be2;
+  margin-bottom: 15px;
+}
+
+.couple-connected p {
+  margin-bottom: 20px;
+}
+
+.couple-connected strong {
+  background-color: #f0e6ff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 18px;
+  letter-spacing: 1px;
+}
